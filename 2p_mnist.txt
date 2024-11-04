@@ -1,0 +1,71 @@
+# Step 1: Import necessary packages
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.utils import to_categorical
+
+# Step 2: Load the MNIST dataset from CSV
+# Replace 'path_to_your_file.csv' with the actual path to your CSV file
+data = pd.read_csv('path_to_your_file.csv')
+
+# Separate labels and features
+y = data.iloc[:, 0].values  # First column as labels
+x = data.iloc[:, 1:].values  # Remaining columns as features (pixel values)
+
+# Step 3: Preprocess the data
+x = x.astype('float32') / 255.0  # Normalize pixel values between 0 and 1
+y = to_categorical(y, 10)          # One-hot encode the labels
+
+# Split into training and testing sets (e.g., 80% train, 20% test)
+split_index = int(0.8 * len(x))
+x_train, x_test = x[:split_index], x[split_index:]
+y_train, y_test = y[:split_index], y[split_index:]
+
+# Step 4: Define the network architecture
+model = Sequential([
+    Flatten(input_shape=(784,)),  # Flatten the input
+    Dense(128, activation='relu'),   # First hidden layer
+    Dense(64, activation='relu'),    # Second hidden layer
+    Dense(10, activation='softmax')  # Output layer with 10 classes
+])
+
+# Step 5: Compile the model
+model.compile(optimizer='adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+
+# Step 6: Train the model
+history = model.fit(x_train, y_train, 
+                    epochs=10, 
+                    batch_size=32, 
+                    validation_split=0.2)  # Use 20% of the training data for validation
+
+# Step 7: Evaluate the model
+loss, accuracy = model.evaluate(x_test, y_test)
+print(f'Test Loss: {loss}, Test Accuracy: {accuracy}')
+
+# Step 8: Plot training & validation metrics
+plt.figure(figsize=(14, 5))
+
+# Accuracy plot
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Train Acc')
+plt.plot(history.history['val_accuracy'], label='Val Acc', linestyle='--')
+plt.title('Model Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+# Loss plot
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Val Loss', linestyle='--')
+plt.title('Model Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.show()

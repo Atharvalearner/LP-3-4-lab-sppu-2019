@@ -1,0 +1,50 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, models
+import os
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+
+# Step 1: Load the dataset from directory
+def load_data(directory):
+    images = []
+    labels = []
+    for label in range(10):  # Digits 0-9
+        label_dir = os.path.join(directory, str(label))
+        for filename in os.listdir(label_dir):
+            img_path = os.path.join(label_dir, filename)
+            image = load_img(img_path, color_mode='grayscale', target_size=(28, 28))
+            image = img_to_array(image) / 255.0  # Normalize pixel values
+            images.append(image)
+            labels.append(label)
+    return np.array(images), np.array(labels)
+
+# Load training and testing data
+x_train, y_train = load_data('dataset/train')
+x_test, y_test = load_data('dataset/test')
+
+# Step 2: Reshape the images for CNN
+x_train = x_train.reshape((x_train.shape[0], 28, 28, 1))  # Reshape for CNN
+x_test = x_test.reshape((x_test.shape[0], 28, 28, 1))    # Reshape for CNN
+
+# Step 3: Labels are already integers from 0 to 9, so no need to one-hot encode
+
+# Step 4: Define the model architecture
+model = models.Sequential([
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10, activation='softmax')  # 10 classes for digits 0-9
+])
+
+# Step 5: Compile the model with sparse categorical crossentropy
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Step 6: Train the model
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+
+# Step 7: Evaluate the model
+test_loss, test_accuracy = model.evaluate(x_test, y_test)
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
